@@ -25,7 +25,9 @@ services:
       dockerfile: Dockerfile  
     container_name: app-node
     #entrypoint: dockerize -wait tcp://db-mysql:3306 -timeout 30s docker-entrypoint.sh
-    command: ["node", "index.js"]
+    # acrescido do comando `npm install` como uma melhoria uso do container p/ desenvolvimento, não sendo necessário recriar a imagem
+    entrypoint: sh -c "npm install && node index.js" 
+    #command: ["node", "index.js"]
     tty: true
     volumes:
       - ./node/:/usr/src/app
