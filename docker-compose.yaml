@@ -1,0 +1,57 @@
+services:
+  db:
+    image: mysql:8
+    command: --innodb-use-native-aio=0
+    container_name: db-mysql
+    restart: always
+    tty: true
+    environment:
+      - MYSQL_DATABASE=nodedb
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - ./mysql/data/:/var/lib/mysql/
+      - ./mysql/init/:/docker-entrypoint-initdb.d/
+    networks:
+      - fullcycle_docker
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+  app:
+    build:
+      context: ./node
+      dockerfile: Dockerfile  
+    container_name: app-node
+    #entrypoint: dockerize -wait tcp://db-mysql:3306 -timeout 30s docker-entrypoint.sh
+    command: ["node", "index.js"]
+    tty: true
+    volumes:
+      - ./node/:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - fullcycle_docker
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+  nginx:
+    build:
+      context: ./nginx
+    container_name: nginx-proxy
+    ports:
+      - "8080:80"
+    networks:
+      - fullcycle_docker
+    depends_on:
+      app:
+        condition: service_healthy      
+networks:
+  fullcycle_docker:
+    driver: bridge
