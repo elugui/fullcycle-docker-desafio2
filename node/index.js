@@ -1,5 +1,4 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const mySql = require('mysql2');
 
 const app = express();
@@ -21,8 +20,8 @@ connection.connect((err) => {
     console.log('Connected to the database');
 });
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
